@@ -1,0 +1,233 @@
+<html>
+
+<head>
+    <title>Dice</title>
+    <meta name="viewport" content="width=360,initial-scale=1">
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript">
+        let user = {};
+        function createUser() {
+            var url = "https://thpyg6ob55.execute-api.ap-northeast-1.amazonaws.com/default/user";
+            console.log(url);
+            var jsondata = { "postservertime": 0 };
+            $.ajax({
+                dataType: "json",
+                data: JSON.stringify(jsondata),
+                type: "PUT",
+                url: url,
+                success: function (resp, status) {
+                    document.getElementById("logarea").value = resp["body"];
+                    let body = JSON.parse(resp["body"]);
+
+                    localStorage.setItem('uuid', body.uuid);
+                    user.uuid = body.uuid;
+                    user.user_name = body.user_name;
+                    update();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    document.getElementById("logarea").value =
+                        "XMLHttpRequest: " + XMLHttpRequest.status +
+                        "\r\ntextStatus: " + textStatus +
+                        "\r\nerrorThrown: " + errorThrown.message;
+                }
+            });
+        }
+
+        function updateUserName() {
+            var name = window.prompt("名前を入力", user.user_name);
+            console.log(name);
+            var url = "https://thpyg6ob55.execute-api.ap-northeast-1.amazonaws.com/default/name";
+            var jsondata = { "user_name": name, "uuid": user.uuid };
+            $.ajax({
+                dataType: "json",
+                data: JSON.stringify(jsondata),
+                type: "PUT",
+                url: url,
+                success: function (resp, status) {
+                    document.getElementById("logarea").value = resp["body"];
+                    let body = JSON.parse(resp["body"]);
+
+                    localStorage.setItem('uuid', body.uuid);
+                    user.uuid = body.uuid;
+                    user.user_name = body.user_name;
+                    update();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    document.getElementById("logarea").value =
+                        "XMLHttpRequest: " + XMLHttpRequest.status +
+                        "\r\ntextStatus: " + textStatus +
+                        "\r\nerrorThrown: " + errorThrown.message;
+                }
+            });
+        }
+        function update() {
+            $('#uuid').text(user.uuid);
+            $('#dice').text(user.dice);
+            $('#user_name').text(user.user_name);
+        }
+
+        function getUser() {
+            var url = "https://thpyg6ob55.execute-api.ap-northeast-1.amazonaws.com/default/user";
+            console.log(url);
+            var jsondata = { "uuid": user.uuid };
+            $.ajax({
+                dataType: "json",
+                data: jsondata,
+                type: "GET",
+                url: url,
+                success: function (resp, status) {
+                    console.log("success");
+                    console.log(JSON.stringify(resp));
+                    document.getElementById("logarea").value = resp["body"];
+                    let body = JSON.parse(resp["body"]);
+                    user.dice = body.dice;
+                    user.user_name = body.user_name;
+
+                    update();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("error");
+                    document.getElementById("logarea").value =
+                        "XMLHttpRequest: " + XMLHttpRequest.status +
+                        "\r\ntextStatus: " + textStatus +
+                        "\r\nerrorThrown: " + errorThrown.message;
+                }
+            });
+        }
+
+        function playDice() {
+            var url = "https://thpyg6ob55.execute-api.ap-northeast-1.amazonaws.com/default/dice";
+            var jsondata = { "uuid": user.uuid };
+            console.log(url);
+            $.ajax({
+                dataType: "json",
+                data: JSON.stringify(jsondata),
+                type: "PUT",
+                url: url,
+                success: function (resp, status) {
+                    console.log("success");
+                    console.log(JSON.stringify(resp));
+                    document.getElementById("logarea").value = resp["body"];
+                    let body = JSON.parse(resp["body"]);
+                    user.dice = body.dice;
+                    update();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("error");
+                    document.getElementById("logarea").value =
+                        "XMLHttpRequest: " + XMLHttpRequest.status +
+                        "\r\ntextStatus: " + textStatus +
+                        "\r\nerrorThrown: " + errorThrown.message;
+                }
+            });
+        }
+
+        function getBoard() {
+            var url = "https://thpyg6ob55.execute-api.ap-northeast-1.amazonaws.com/default/board";
+            $.ajax({
+                type: "GET",
+                url: url,
+                success: function (resp, status) {
+                    console.log("success");
+                    console.log(JSON.stringify(resp));
+                    document.getElementById("logarea").value = resp["body"];
+                    let body = JSON.parse(resp["body"]);
+                    // user.dice = body.dice;
+                    // update();
+                    createBoard(body.boardLayout);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("error");
+                    document.getElementById("logarea").value =
+                        "XMLHttpRequest: " + XMLHttpRequest.status +
+                        "\r\ntextStatus: " + textStatus +
+                        "\r\nerrorThrown: " + errorThrown.message;
+                }
+            });
+        }
+
+        function createBoard(boardLayout) {
+            console.log(boardLayout);
+            let table = document.getElementById('board');
+            for (let i = 0; i < boardLayout.length; i++) {
+                let row = boardLayout[i];
+                let tr = document.createElement('TR');
+                table.appendChild(tr);
+                for (let j = 0; j < row.length; j++) {
+                    let td = document.createElement('TD');
+                    if (row[j] == 0) {
+                        td.setAttribute("class", "blank");
+                    } else {
+                        td.setAttribute("class", "cell");
+                        td.onclick = function () { alert(row[j]); };
+                    }
+
+                    tr.appendChild(td);
+                }
+            }
+        }
+
+        $(document).ready(function () {
+            user.uuid = localStorage.getItem("uuid");
+            console.log(user.uuid);
+            $('#uuid').text(user.uuid);
+            getBoard();
+        });
+
+    </script>
+    <style>
+        td.cell {
+            padding: 0px;
+            width: 24px;
+            height: 24px;
+            background-color: antiquewhite;
+        }
+
+        td.blank {
+            padding: 0px;
+            width: 24px;
+            height: 24px;
+            background-color: dimgray;
+        }
+    </style>
+</head>
+
+<body>
+    <div><!--┌─│┘┤┐┼┬├┴└-->
+        <tt>┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐</tt>
+        <tt>│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │</tt>
+        <tt>├─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┤</tt>
+        <tt>│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │</tt>
+        <tt>└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘</tt>
+    </div>
+    <div>
+        <table id="board"></table>
+    </div>
+    <div>
+        <table>
+            <tr>
+                <th>UUID</th>
+                <td><button onclick="if(window.confirm('使用中のデータが削除されます。よろしいですか？')){createUser();}">ユーザー作成</button></td>
+                <td id="uuid"></td>
+            </tr>
+            <tr>
+                <th>名前</th>
+                <td><button onclick="updateUserName();">名前変更</button></td>
+                <td id="user_name"></td>
+            </tr>
+            <tr>
+                <th>出目</th>
+                <td id="dice"></td>
+            </tr>
+        </table>
+        <div>
+            <textarea id="logarea" cols="30" rows="5"></textarea>
+        </div>
+        <hr />
+        <button onclick="getUser()">ユーザーデータ取得</button>
+        <button onclick="playDice()">サイコロ</button>
+    </div>
+</body>
+
+</html>
