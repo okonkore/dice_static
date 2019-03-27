@@ -65,6 +65,15 @@
             $('#uuid').text(user.uuid);
             $('#dice').text(user.dice);
             $('#user_name').text(user.user_name);
+            $('#s_' + user.pos).addClass("pos");
+            console.log(user.next);
+            if (user.next != null) {
+                console.log(user.next);
+                for (let i = 0; i < user.next.length; i++) {
+                    console.log(user.next[i]);
+                    $('#s_' + user.next[i]).addClass("next");
+                }
+            }
         }
 
         function getUser() {
@@ -83,6 +92,8 @@
                     let body = JSON.parse(resp["body"]);
                     user.dice = body.dice;
                     user.user_name = body.user_name;
+                    user.pos = body.pos;
+                    user.next = body.next;
 
                     update();
                 },
@@ -147,6 +158,35 @@
             });
         }
 
+        function updatePos(pos) {
+            console.log("updatePos:" + pos);
+            var url = "https://thpyg6ob55.execute-api.ap-northeast-1.amazonaws.com/default/pos";
+            var jsondata = { "uuid": user.uuid, "pos": pos };
+            $.ajax({
+                dataType: "json",
+                data: JSON.stringify(jsondata),
+                type: "PUT",
+                url: url,
+                success: function (resp, status) {
+                    console.log("success");
+                    console.log(JSON.stringify(resp));
+                    document.getElementById("logarea").value = resp["body"];
+                    let body = JSON.parse(resp["body"]);
+                    // user.dice = body.dice;
+                    // update();
+                    createBoard(body.boardLayout);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("error");
+                    document.getElementById("logarea").value =
+                        "XMLHttpRequest: " + XMLHttpRequest.status +
+                        "\r\ntextStatus: " + textStatus +
+                        "\r\nerrorThrown: " + errorThrown.message;
+                }
+            });
+
+        }
+
         function createBoard(boardLayout) {
             console.log(boardLayout);
             let table = document.getElementById('board');
@@ -156,11 +196,17 @@
                 table.appendChild(tr);
                 for (let j = 0; j < row.length; j++) {
                     let td = document.createElement('TD');
+                    td.setAttribute("id", "s_" + row[j]);
+                    if (row[j] != 0) {
+                        td.onclick = function () { updatePos(row[j]); };
+                    }
+
                     if (row[j] == 0) {
                         td.setAttribute("class", "blank");
+                    } else if (row[j] == user.pos) {
+                        td.setAttribute("class", "pos");
                     } else {
                         td.setAttribute("class", "cell");
-                        td.onclick = function () { alert(row[j]); };
                     }
 
                     tr.appendChild(td);
@@ -182,6 +228,20 @@
             width: 24px;
             height: 24px;
             background-color: antiquewhite;
+        }
+
+        td.pos {
+            padding: 0px;
+            width: 24px;
+            height: 24px;
+            background-color: indianred;
+        }
+
+        td.next {
+            padding: 0px;
+            width: 24px;
+            height: 24px;
+            background-color: lightsalmon
         }
 
         td.blank {
